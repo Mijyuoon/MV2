@@ -12,20 +12,20 @@ namespace Mijyuoon.Crypto.MV2 {
         private byte[,] decodeLUT;
 
         public KeyData(BaseKDF kdf) {
-            encodeLUT = new byte[256, KeySets];
+            encodeLUT = new byte[KeySets, 256];
             kdf.FillTables(encodeLUT);
 
-            decodeLUT = new byte[256, KeySets];
+            decodeLUT = new byte[KeySets, 256];
             for(int ki = 0; ki < KeySets; ki++) {
                 for(int i = 0; i < 256; i++) {
-                    byte ev = encodeLUT[i, ki];
-                    decodeLUT[ev, ki] = (byte)i;
+                    byte ev = encodeLUT[ki, i];
+                    decodeLUT[ki, ev] = (byte)i;
                 }
             }
         }
 
-        public byte Encode(byte val, int kset) => encodeLUT[val, kset % KeySets];
+        public byte Encode(byte val, int kset) => encodeLUT[kset % KeySets, val];
 
-        public byte Decode(byte val, int kset) => decodeLUT[val, kset % KeySets];
+        public byte Decode(byte val, int kset) => decodeLUT[kset % KeySets, val];
     }
 }

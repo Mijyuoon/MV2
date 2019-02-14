@@ -1,53 +1,91 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using MV2 = Mijyuoon.Crypto.MV2;
 
 namespace MV2Code {
     class Program {
-        static void ShowBytes(byte[] data, bool hex) {
-            Console.Write($"{data.Length:X4} @ ");
-
-            for(int i = 0; i < data.Length; i++) {
-                if(!hex) {
-                    string bits = Convert.ToString(data[i], 2);
-                    Console.Write($"{bits.PadLeft(8, '0')} ");
-                } else {
-                    Console.Write($"{data[i]:X2} ");
-                }
-            }
-
-            Console.WriteLine();
+        static void GenerateKey(string kfile) {
+            var key = MV2.Key.Generate(MV2.KeySize.K256);
+            File.WriteAllBytes(kfile, key);
         }
 
-        static void ShowArray(byte[] data, string label) {
-            Console.Write($"{label}: ");
-            ShowBytes(data, true);
+        static void EncryptFile(string inkey, string infile, string outflag, string outres) {
+            var key = new MV2.Key(File.ReadAllBytes(inkey));
+            var encoder = new MV2.Encoder(key, rounds: 16);
+            
+            
+            var result = encoder.Encode(File.ReadAllBytes(infile));
+            File.WriteAllBytes(outflag, result.Flag);
+            File.WriteAllBytes(outres, result.Residual);
+        }
 
-            var str = Encoding.GetEncoding(1252).GetString(data);
-            Console.WriteLine($"{str}\n");
+        static void DecryptFile(string inkey, string inflag, string inres, string outfile) {
+            var key = new MV2.Key(File.ReadAllBytes(inkey));
+            var decoder = new MV2.Decoder(key);
+
+            var flag = File.ReadAllBytes(inflag);
+            var res = File.ReadAllBytes(inres);
+            File.WriteAllBytes(outfile, decoder.Decode(flag, res));
+        }
+
+        static void CheckFiles(params string[] paths) {
+            foreach(var path in paths) {
+                if(!File.Exists(path)) {
+                    Console.WriteLine("File '{0}' does not exist", path);
+                    Environment.Exit(-1);
+                }
+            }
+        }
+
+        static void ShowUsage(string extra = null) {
+            if(extra != null) {
+                Console.WriteLine(extra);
+            }
+
+            Console.WriteLine("Usage:");
+            Console.WriteLine("  mv2code -genkey <key>");
+            Console.WriteLine("  mv2code -enc <key> <file> <flags> <kernel>");
+            Console.WriteLine("  mv2code -dec <key> <flags> <kernel> <file>");
+
+            Environment.Exit(0);
         }
 
         static void Main(string[] args) {
-            var key = new MV2.Key(null);        
-            var encoder = new MV2.Encoder(key, 16);
-            var decoder = new MV2.Decoder(key);
+            if(args.Length < 1) {
+                ShowUsage("No option provided");
+            }
 
-            var data = Encoding.ASCII.GetBytes("Hello world from this shit.");
+            switch(args[0]) {
+            case "-genkey":
+                if(args.Length < 2) {
+                    ShowUsage("Too few arguments provided");
+                }
+                GenerateKey(args[1]);
+                break;
 
-            var buffer = new byte[32];
-            Array.Copy(data, buffer, data.Length);
-            var result = encoder.Encode(buffer);
+            case "-enc":
+                if(args.Length < 5) {
+                    ShowUsage("Too few arguments provided");
+                }
+                CheckFiles(args[1], args[2]);
+                EncryptFile(args[1], args[2], args[3], args[4]);
+                break;
 
-            ShowArray(data, "I");
-            ShowArray(result.Flag, "F");
-            ShowArray(result.Residual, "R");
+            case "-dec":
+                if(args.Length < 5) {
+                    ShowUsage("Too few arguments provided");
+                }
+                CheckFiles(args[1], args[2], args[3]);
+                DecryptFile(args[1], args[2], args[3], args[4]);
+                break;
 
-            var data2 = decoder.Decode(result.Flag, result.Residual);
-            ShowArray(data2, "D");
-
-            Console.ReadKey(true);
+            default:
+                ShowUsage($"Invalid option '{args[0]}'");
+                break;
+            }
         }
     }
 }

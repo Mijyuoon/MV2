@@ -29,9 +29,11 @@ namespace Mijyuoon.Crypto.MV2 {
         }
 
         public EncodeResult Encode(byte[] data) {
+            /*
             if(data.Length % BlockSize != 0) {
                 throw new ArgumentException("Data size must be multiple of block size", nameof(data));
             }
+            */
 
             var flagOut = new BitWriteStream[rounds];
             var resOut = new BitWriteStream();
