@@ -99,7 +99,11 @@ namespace Mijyuoon.Crypto.MV2 {
         }
 
         private void PermuteBlock(byte[] block, int offset, int kset) {
-            // TODO
+            // This is bad, replace with proper code later
+            int maxl = Math.Min(block.Length, offset + BlockSize);
+            for(int i = offset; i < maxl; i++) {
+                block[i] ^= key.Encode((byte)((i << 11) & 0xff), kset);
+            }
         }
     }
 }

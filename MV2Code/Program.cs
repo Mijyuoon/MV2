@@ -54,6 +54,11 @@ namespace MV2Code {
         }
 
         static void Main(string[] args) {
+#if DEBUG
+            EncryptFile("D:/key.dat", "D:/wat.jpg", "D:/test.flg", "D:/test.krn");
+            DecryptFile("D:/key.dat", "D:/test.flg", "D:/test.krn", "D:/wat2.jpg");
+            Environment.Exit(0);
+#endif
             if(args.Length < 1) {
                 ShowUsage("No option provided");
             }
