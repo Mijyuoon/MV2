@@ -6,7 +6,7 @@ namespace Mijyuoon.Crypto.MV2.Utils {
         private int elptr;
         private byte[] data;
         private long ilen;
-
+        
         public BitReadStream(byte[] data, long length) {
             Reset(data, length);
         }
@@ -84,12 +84,15 @@ namespace Mijyuoon.Crypto.MV2.Utils {
 
         public void Reset(byte[] data) => Reset(data, data.Length * 8);
 
+        // KLUDGE: Do not use
         public void FinishByte() {
             if(bptr == 0) return;
 
             bptr = 0;
             elptr++;
         }
+
+        #region Internal methods
 
         private void Advance(int n) {
             elptr += (bptr + n) / 8;
@@ -103,5 +106,7 @@ namespace Mijyuoon.Crypto.MV2.Utils {
             Advance(n);
             return v;
         }
+
+        #endregion
     }
 }

@@ -87,12 +87,15 @@ namespace Mijyuoon.Crypto.MV2.Utils {
 
         public void Reset() => Reset(4);
 
+        // KLUDGE: Do not use
         public void FinishByte() {
             if(bptr == 0) return;
 
             ulong bits = PaddingBits;
             AddBits(ref bits, 8 - bptr);
         }
+
+        #region Internal methods
 
         private void Advance(int n, bool nogrow) {
             elptr += (bptr + n) / 8;
@@ -119,6 +122,22 @@ namespace Mijyuoon.Crypto.MV2.Utils {
             PutBits(b, n);
             Advance(n, false);
             b >>= n;
+        }
+
+        #endregion
+
+        public static byte[] Combine(IEnumerable<BitWriteStream> streams) {
+            var buffer = new byte[streams.Sum(x => x.BytesWritten)];
+
+            int offset = 0;
+            foreach(var stream in streams) {
+                if(stream.BytesWritten < 1) continue;
+
+                Array.Copy(stream.GetBytesInternal(), 0, buffer, offset, stream.BytesWritten);
+                offset += stream.BytesWritten;
+            }
+
+            return buffer;
         }
     }
 }

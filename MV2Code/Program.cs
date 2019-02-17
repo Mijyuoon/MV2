@@ -15,8 +15,7 @@ namespace MV2Code {
         static void EncryptFile(string inkey, string infile, string outflag, string outres) {
             var key = new MV2.Key(File.ReadAllBytes(inkey));
             var encoder = new MV2.Encoder(key, rounds: 16);
-            
-            
+
             var result = encoder.Encode(File.ReadAllBytes(infile));
             File.WriteAllBytes(outflag, result.Flag);
             File.WriteAllBytes(outres, result.Residual);
@@ -54,11 +53,6 @@ namespace MV2Code {
         }
 
         static void Main(string[] args) {
-#if DEBUG
-            EncryptFile("D:/key.dat", "D:/wat.jpg", "D:/test.flg", "D:/test.krn");
-            DecryptFile("D:/key.dat", "D:/test.flg", "D:/test.krn", "D:/wat2.jpg");
-            Environment.Exit(0);
-#endif
             if(args.Length < 1) {
                 ShowUsage("No option provided");
             }

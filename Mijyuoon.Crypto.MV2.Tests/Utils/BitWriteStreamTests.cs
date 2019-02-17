@@ -33,7 +33,7 @@ namespace Mijyuoon.Crypto.MV2.Tests.Utils {
 
         [TestMethod]
         public void WriteExpand() {
-            var bs = new BitWriteStream(1);
+            var bs = new BitWriteStream(4);
 
             bs.Write(0b_____101, 3);
             bs.Write(0b_1001110, 7);
@@ -42,6 +42,22 @@ namespace Mijyuoon.Crypto.MV2.Tests.Utils {
 
             uint value = BitConverter.ToUInt32(bs.GetBytes(), 0);
             Assert.AreEqual<uint>(0b_11111111_0010_1001110_101, value);
+        }
+
+        [TestMethod]
+        public void Combine() {
+            var bs1 = new BitWriteStream();
+            bs1.Write(0b101010, 6);
+            bs1.Write(0b101010, 6);
+
+            var bs2 = new BitWriteStream();
+            bs2.Write(0b010101, 6);
+            bs2.Write(0b010101, 6);
+
+            var cb = BitWriteStream.Combine(new[] { bs1, bs2 });
+            Assert.AreEqual<byte>(0xAA, cb[0]);
+            Assert.AreEqual<byte>(0x5A, cb[1]);
+            Assert.AreEqual<byte>(0x55, cb[2]);
         }
     }
 }

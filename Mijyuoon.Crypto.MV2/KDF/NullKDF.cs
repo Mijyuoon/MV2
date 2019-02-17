@@ -6,9 +6,9 @@ using System.Text;
 namespace Mijyuoon.Crypto.MV2.KDF {
     class NullKDF : BaseKDF {
         public override void FillTables(byte[,] lut) {
-            for(int ki = 0; ki < lut.GetLength(1); ki++) {
-                for(int i = 0; i < lut.GetLength(0); i++) {
-                    lut[i, ki] = (byte)i;   
+            for(int ki = 0; ki < KeyData.KeySets; ki++) {
+                for(int j = 0; j < 256; j++) {
+                    lut[ki, j] = (byte)j;
                 }
             }
         }

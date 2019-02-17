@@ -273,10 +273,12 @@ namespace Mijyuoon.Crypto.MV2.Data {
             for(int i = 0; i < EncodeData.Length; i++) {
                 var (res, flag) = EncodeData[i];
 
+                // Add residual group for current flag unless already added
                 if(!flags.ContainsKey(flag)) {
                     flags.Add(flag, (res.Length, new byte[1 << res.Length]));
                 }
 
+                // Fill decoded value for current residual bits
                 flags[flag].Item2[res.Value] = (byte)i;
             }
 

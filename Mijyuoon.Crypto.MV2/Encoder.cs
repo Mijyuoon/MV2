@@ -14,28 +14,18 @@ namespace Mijyuoon.Crypto.MV2 {
 
     public class Encoder {
         internal const int BlockSize = 16;
-        internal const int RandomBits = 8;
+        internal const int MinResidual = 8;
 
         private KeyData key;
         private int rounds;
 
-        private Random prng;
-
         public Encoder(Key key, int rounds = 16) {
             this.key = key.Data;
             this.rounds = rounds;
-            
-            this.prng = new Random();
         }
 
         public EncodeResult Encode(byte[] data) {
-            /*
-            if(data.Length % BlockSize != 0) {
-                throw new ArgumentException("Data size must be multiple of block size", nameof(data));
-            }
-            */
-
-            var flagOut = new BitWriteStream[rounds];
+            var flagOut = new List<BitWriteStream>();
             var resOut = new BitWriteStream();
 
             // Actual data length
@@ -43,13 +33,13 @@ namespace Mijyuoon.Crypto.MV2 {
 
             // Perform specified number of rounds
             for(int ri = 0; ri < rounds; ri++) {
-                flagOut[ri] = new BitWriteStream();
+                flagOut.Add(new BitWriteStream());
 
                 // Placeholder for header
                 resOut.Write(0UL, 8);
 
                 // Generate key set number
-                int kset = prng.Next(KeyData.KeySets);
+                int kset = key.GetNextKeyset();
 
                 // Permute bits on per-block basis
                 for(int ofs = 0; ofs < dataLength; ofs += BlockSize) {
@@ -69,7 +59,7 @@ namespace Mijyuoon.Crypto.MV2 {
                 long fbits = 8 - resOut.Position % 8;
 
                 // Fill the header
-                resOut[0] = (byte)(fbits | (kset << 3));
+                resOut[0] = (byte)((fbits & 7) | (kset << 3));
 
                 // Forward the residual to next round
                 data = resOut.GetBytesInternal();
@@ -78,18 +68,13 @@ namespace Mijyuoon.Crypto.MV2 {
 
                 // KLUDGE: Pad the flag bitstream to full byte
                 flagOut[ri].FinishByte();
+
+                // Terminate early if residual is too small
+                if(dataLength <= MinResidual) break;
             }
 
-            // Concatenated flag buffer
-            var flagFinal = new byte[flagOut.Sum(x => x.BytesWritten)];
-
-            // Concatenate flag streams into final array
-            int offset = 0;
-            for(int i = flagOut.Length - 1; i >= 0; i--) {
-                int len = flagOut[i].BytesWritten;
-                Array.Copy(flagOut[i].GetBytesInternal(), 0, flagFinal, offset, len);
-                offset += len;
-            }
+            // Concatenate flag buffers into final array
+            var flagFinal = BitWriteStream.Combine(flagOut.Reverse<BitWriteStream>());
 
             // Trim the residual
             var resFinal = new byte[dataLength];
