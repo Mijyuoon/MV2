@@ -13,7 +13,6 @@ namespace Mijyuoon.Crypto.MV2 {
     }
 
     public class Encoder {
-        internal const int BlockSize = 16;
         internal const int MinResidual = 8;
 
         private KeyData key;
@@ -41,22 +40,23 @@ namespace Mijyuoon.Crypto.MV2 {
                 // Generate key set number
                 int kset = key.GetNextKeyset();
 
-                // Permute bits on per-block basis
-                for(int ofs = 0; ofs < dataLength; ofs += BlockSize) {
-                    PermuteBlock(data, ofs, kset);
-                }
+                unsafe {
+                    // Use raw pointers to skip array bounds check
+                    fixed (byte* dptr = data) {
+                        // Perform MV2 substitutions
+                        for(int i = 0; i < dataLength; i++) {
+                            // Scramble byte values before MV2 lookup
+                            byte val = key.Encode(key.XorByte(dptr[i], i), kset);
+                            var (res, flag) = TransformTable.Encode(val);
 
-                // Perform MV2 substitutions
-                for(int i = 0; i < dataLength; i++) {
-                    byte val = key.Encode(data[i], kset);
-                    var (res, flag) = TransformTable.Encode(val);
-
-                    resOut.Write(res);
-                    flagOut[ri].Write(flag);
+                            resOut.Write(res);
+                            flagOut[ri].Write(flag);
+                        }
+                    }
                 }
 
                 // Num. free bits in last byte
-                long fbits = 8 - resOut.Position % 8;
+                long fbits = 8 - (resOut.Position & 7);
 
                 // Fill the header
                 resOut[0] = (byte)((fbits & 7) | (kset << 3));
@@ -81,14 +81,6 @@ namespace Mijyuoon.Crypto.MV2 {
             Array.Copy(data, resFinal, dataLength);
 
             return new EncodeResult { Residual = resFinal, Flag = flagFinal };
-        }
-
-        private void PermuteBlock(byte[] block, int offset, int kset) {
-            // This is bad, replace with proper code later
-            int maxl = Math.Min(block.Length, offset + BlockSize);
-            for(int i = offset; i < maxl; i++) {
-                block[i] ^= key.Encode((byte)((i << 11) & 0xff), kset);
-            }
         }
     }
 }

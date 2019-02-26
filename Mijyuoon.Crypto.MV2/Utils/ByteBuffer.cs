@@ -14,6 +14,8 @@ namespace Mijyuoon.Crypto.MV2.Utils {
             Reset(capacity);
         }
 
+        public ByteBuffer() : this(4) {}
+
         public int Position => elptr;
 
         public int Length => data.Length;

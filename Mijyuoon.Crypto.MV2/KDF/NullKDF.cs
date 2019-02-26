@@ -12,5 +12,13 @@ namespace Mijyuoon.Crypto.MV2.KDF {
                 }
             }
         }
+
+        public override void FillTables(byte[,] lut, uint[] kext) {
+            FillTables(lut);
+
+            for(int j = 0; j < 256; j++) {
+                kext[j] = 0U;
+            }
+        }
     }
 }

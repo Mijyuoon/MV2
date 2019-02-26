@@ -95,8 +95,8 @@ namespace Mijyuoon.Crypto.MV2.Utils {
         #region Internal methods
 
         private void Advance(int n) {
-            elptr += (bptr + n) / 8;
-            bptr = (bptr + n) % 8;
+            elptr += (bptr + n) >> 3;
+            bptr = (bptr + n) & 7;
         }
 
         private uint GetBits(int n) {

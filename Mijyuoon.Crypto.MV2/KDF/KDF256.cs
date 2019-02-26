@@ -19,7 +19,9 @@ namespace Mijyuoon.Crypto.MV2.KDF {
             this.key = key;
         }
 
-        public unsafe override void FillTables(byte[,] lut) {
+        public override unsafe void FillTables(byte[,] lut) => FillTables(lut, new uint[256]);
+
+        public unsafe override void FillTables(byte[,] lut, uint[] kx) {
             uint rol(uint x, int n) =>
                 (x << n) | (x >> (32 - n));
 
@@ -31,7 +33,6 @@ namespace Mijyuoon.Crypto.MV2.KDF {
 
             fixed (byte* kptr8 = key) {
                 var kptr = (uint*)kptr8;
-                var kx = new uint[256];
 
                 for(int i = 0; i < 8; i++) {
                     kx[i] = kptr[i];
